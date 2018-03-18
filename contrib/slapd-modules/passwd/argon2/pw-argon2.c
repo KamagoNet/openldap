@@ -32,6 +32,7 @@
 #define SLAPD_ARGON2_MEMORY crypto_pwhash_argon2i_MEMLIMIT_INTERACTIVE
 
 const struct berval slapd_argon2_scheme = BER_BVC("{ARGON2}");
+const struct berval slapd_argon2i_scheme = BER_BVC("{ARGON2I}");
 
 static int slapd_argon2_hash(
   const struct berval *scheme,
@@ -84,6 +85,13 @@ int init_module(int argc, char *argv[]) {
   if (rc == -1) {
     return -1;
   }
-  return lutil_passwd_add((struct berval *)&slapd_argon2_scheme,
-              slapd_argon2_verify, slapd_argon2_hash);
+
+  rc = lutil_passwd_add((struct berval *)&slapd_argon2_scheme,
+        slapd_argon2_verify, slapd_argon2_hash);
+  if(rc) {
+    return rc;
+  }
+
+  return lutil_passwd_add((struct berval *)&slapd_argon2i_scheme,
+        slapd_argon2_verify, slapd_argon2_hash);
 }
