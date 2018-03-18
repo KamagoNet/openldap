@@ -45,28 +45,22 @@ static int slapd_argon2_hash(
    */
   uint32_t iterations = SLAPD_ARGON2_ITERATIONS;
   uint32_t memory = SLAPD_ARGON2_MEMORY;
+  char encoded_password[crypto_pwhash_STRBYTES];
 
-  size_t encoded_length = crypto_pwhash_argon2i_strbytes();
-
-  struct berval encoded;
-  encoded.bv_len = encoded_length;
-  encoded.bv_val = ber_memalloc(encoded.bv_len);
-
-  int rc = crypto_pwhash_argon2i_str(encoded.bv_val, passwd->bv_val, passwd->bv_len,
+  int rc = crypto_pwhash_argon2i_str(encoded_password, passwd->bv_val, passwd->bv_len,
             iterations, memory);
 
   if(rc) {
-    ber_memfree(encoded.bv_val);
     return LUTIL_PASSWD_ERR;
   }
+
+  size_t encoded_length = strlen(encoded_password);
 
   hash->bv_len = scheme->bv_len + encoded_length;
   hash->bv_val = ber_memalloc(hash->bv_len);
 
   AC_MEMCPY(hash->bv_val, scheme->bv_val, scheme->bv_len);
-  AC_MEMCPY(hash->bv_val + scheme->bv_len, encoded.bv_val, encoded.bv_len);
-
-  ber_memfree(encoded.bv_val);
+  AC_MEMCPY(hash->bv_val + scheme->bv_len, &encoded_password, encoded_length);
 
   return LUTIL_PASSWD_OK;
 }
